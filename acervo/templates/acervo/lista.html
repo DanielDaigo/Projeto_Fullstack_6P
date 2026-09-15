@@ -1,0 +1,33 @@
+{% extends 'acervo/base.html' %} {% block conteudo %}
+<div class="card">
+  <div class="card-header">
+    <h1>Acervo de Livros</h1>
+    <a href="{% url 'novo_livro' %}" class="btn">+ Novo Livro</a>
+  </div>
+
+  <table class="tabela-livros">
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Autor</th>
+        <th>Ano</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for livro in livros %}
+      <tr>
+        <td><strong>{{ livro.titulo }}</strong></td>
+        <td>{{ livro.autor }}</td>
+        <td>{{ livro.ano }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" style="text-align: center; color: var(--text-muted)">
+          Nenhum livro cadastrado.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

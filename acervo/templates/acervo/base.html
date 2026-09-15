@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'acervo/estilo.css' %}">
+</head>
+<body>
+    <header>
+        <h2>Sistema de Biblioteca</h2>
+    </header>
+
+    <main>
+        {% block conteudo %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 - Engenharia de Software</p>
+    </footer>
+</body>
+</html>
