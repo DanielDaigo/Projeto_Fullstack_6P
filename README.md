@@ -164,14 +164,14 @@ Acesse a aplicação diretamente pelo navegador:
 
 ## 🔗 Mapa de Rotas da Aplicação
 
-| Rota                                                  |   Método   | Descrição                                                |
-| ----------------------------------------------------- | :--------: | -------------------------------------------------------- |
-| [`/`](http://127.0.0.1:8000/)                         |    GET     | Homepage com estatísticas do acervo e livros recentes    |
+| Rota                                                  |   Método   | Descrição                                                                   |
+| ----------------------------------------------------- | :--------: | --------------------------------------------------------------------------- |
+| [`/`](http://127.0.0.1:8000/)                         |    GET     | Homepage com estatísticas do acervo e livros recentes                       |
 | [`/livros/`](http://127.0.0.1:8000/livros/)           |    GET     | Listagem de livros com busca textual (Q objects), filtros de status e ações |
-| [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/) | GET / POST | Formulário de criação de novo livro                      |
-| `/livros/<id>/editar/`                                | GET / POST | Formulário de edição dos dados de um livro existente     |
-| `/livros/<id>/excluir/`                               | GET / POST | Tela de confirmação e exclusão definitiva do livro       |
-| [`/admin/`](http://127.0.0.1:8000/admin/)             | GET / POST | Painel administrativo nativo do Django                   |
+| [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/) | GET / POST | Formulário de criação de novo livro                                         |
+| `/livros/<id>/editar/`                                | GET / POST | Formulário de edição dos dados de um livro existente                        |
+| `/livros/<id>/excluir/`                               | GET / POST | Tela de confirmação e exclusão definitiva do livro                          |
+| [`/admin/`](http://127.0.0.1:8000/admin/)             | GET / POST | Painel administrativo nativo do Django                                      |
 
 ---
 
