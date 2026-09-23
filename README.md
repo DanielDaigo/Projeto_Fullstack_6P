@@ -4,24 +4,29 @@
 [![Django](https://img.shields.io/badge/Django-6.1.1-092E20?logo=django)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-CRUD%20100%25%20Completo-brightgreen)]()
+[![Status](https://img.shields.io/badge/Status-P1%20Conclu%C3%ADda%20%7C%20CRUD%20Completo-brightgreen)]()
 
-Aplicação web desenvolvida com **Django** e **PostgreSQL** para gerenciamento completo de um acervo de livros, com foco em arquitetura limpa, segurança e experiência do usuário (UI/UX contemporânea).
+Aplicação web desenvolvida com **Django** e **PostgreSQL** para gerenciamento completo de um acervo de livros, com foco em arquitetura limpa, segurança e experiência do usuário (UI/UX contemporânea), atendendo a todos os requisitos da entrega da **P1** de Laboratório de Programação Full Stack (Universidade de Vassouras).
 
-O projeto contempla a arquitetura MTV (Model-Template-View), persistência com Django ORM, operações completas de CRUD (Create, Read, Update, Delete), homepage integrada na raiz (`/`), painel administrativo nativo com Django Admin, formulários com validação via `ModelForm`, herança de templates e proteção contra CSRF.
+O projeto contempla a arquitetura MTV (Model-Template-View), persistência com Django ORM, operações completas de CRUD (Create, Read, Update, Delete), busca textual com objetos `Q`, filtro dinâmico de status, validações customizadas no `ModelForm`, homepage integrada na raiz (`/`), painel administrativo nativo com Django Admin, herança de templates e proteção contra CSRF.
 
-> **Status atual:** CRUD 100% implementado e funcional, com interface moderna e responsiva.
+> **Status atual:** CRUD 100% implementado e funcional, com busca, filtros dinâmicos e validação customizada para a P1.
 
 ---
 
 ## 🚀 Funcionalidades
 
 - [x] **Homepage intuitiva na raiz (`/`)**: dashboard com métricas do acervo (total, disponíveis, indisponíveis) e títulos recentes
+- [x] **Busca Textual Inteligente (Feature P1)**: pesquisa simultânea por título OU autor com insensibilidade a maiúsculas/minúsculas usando objetos `Q` (`Q(titulo__icontains=...) | Q(autor__icontains=...)`)
+- [x] **Filtro Dinâmico por Status (Feature P1)**: refinamento de livros por disponibilidade (Disponíveis / Emprestados) combinável com a busca textual
+- [x] **Preservação de Estado nos Filtros**: inputs de busca e seletores mantêm os valores após a submissão via parâmetros HTTP GET (`request.GET`)
+- [x] **Tratamento de Lista Vazia com `{% empty %}`**: exibição amigável e opção de limpar filtros quando nenhum exemplar corresponde à busca
 - [x] **CRUD Completo de Livros**:
   - **Create**: cadastro com validação via `ModelForm` e feedback visual
-  - **Read**: listagem com badge de status e busca visual dos registros
+  - **Read**: listagem com badge de status, busca textual e filtros
   - **Update**: edição completa de título, autor, ano e status de disponibilidade
   - **Delete**: exclusão com tela dedicada de confirmação segura (prevenção contra deleções acidentais via `POST`)
+- [x] **Validação Customizada de Negócio (Feature P1)**: método `clean_ano()` no `LivroForm` impedindo que livros sejam cadastrados com ano de publicação futuro (`datetime.date.today().year`)
 - [x] **Feedback visual instantâneo**: integração com o framework `django.contrib.messages` (alertas toast de sucesso, erro e atenção)
 - [x] **Painel de gestão integrado**: Django Admin habilitado e configurado para o model `Livro`
 - [x] **Interface moderna e responsiva**: design system com paleta equilibrada, tipografia Inter, cards, micro-interações e compatibilidade mobile
@@ -162,7 +167,7 @@ Acesse a aplicação diretamente pelo navegador:
 | Rota                                                  |   Método   | Descrição                                                |
 | ----------------------------------------------------- | :--------: | -------------------------------------------------------- |
 | [`/`](http://127.0.0.1:8000/)                         |    GET     | Homepage com estatísticas do acervo e livros recentes    |
-| [`/livros/`](http://127.0.0.1:8000/livros/)           |    GET     | Listagem de livros com status de disponibilidade e ações |
+| [`/livros/`](http://127.0.0.1:8000/livros/)           |    GET     | Listagem de livros com busca textual (Q objects), filtros de status e ações |
 | [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/) | GET / POST | Formulário de criação de novo livro                      |
 | `/livros/<id>/editar/`                                | GET / POST | Formulário de edição dos dados de um livro existente     |
 | `/livros/<id>/excluir/`                               | GET / POST | Tela de confirmação e exclusão definitiva do livro       |
