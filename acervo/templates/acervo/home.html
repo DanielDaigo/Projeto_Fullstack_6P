@@ -1,85 +1,90 @@
-{% extends 'acervo/base.html' %}
-
-{% block title %}Início &bull; Sistema de Biblioteca{% endblock %}
-
-{% block conteudo %}
+{% extends 'acervo/base.html' %} {% block title %}Início &bull; Sistema de
+Biblioteca{% endblock %} {% block conteudo %}
 <div class="hero-section">
-    <div class="hero-content">
-        <span class="badge-tag">Versão 2.0 &bull; CRUD Completo</span>
-        <h1 class="hero-title">Gerenciamento inteligente do seu acervo</h1>
-        <p class="hero-subtitle">
-            Consulte, cadastre, edite e organize livros com facilidade. Aplicação desenvolvida com Django, PostgreSQL e as melhores práticas de arquitetura web.
-        </p>
-        <div class="hero-actions">
-            <a href="{% url 'lista' %}" class="btn btn-primary btn-lg">
-                <span>📖 Explorar Acervo</span>
-            </a>
-            <a href="{% url 'novo_livro' %}" class="btn btn-secondary btn-lg">
-                <span>➕ Cadastrar Livro</span>
-            </a>
-        </div>
+  <div class="hero-content">
+    <span class="badge-tag">Versão 2.0 &bull; CRUD Completo</span>
+    <h1 class="hero-title">Gerenciamento inteligente do seu acervo</h1>
+    <p class="hero-subtitle">
+      Consulte, cadastre, edite e organize livros com facilidade. Aplicação
+      desenvolvida com Django, PostgreSQL e as melhores práticas de arquitetura
+      web.
+    </p>
+    <div class="hero-actions">
+      <a href="{% url 'lista' %}" class="btn btn-primary btn-lg">
+        <span>📖 Explorar Acervo</span>
+      </a>
+      <a href="{% url 'novo_livro' %}" class="btn btn-secondary btn-lg">
+        <span>➕ Cadastrar Livro</span>
+      </a>
     </div>
+  </div>
 </div>
 
 <div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon icon-blue">📚</div>
-        <div class="stat-info">
-            <span class="stat-label">Total de Livros</span>
-            <span class="stat-value">{{ total_livros }}</span>
-        </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-blue">📚</div>
+    <div class="stat-info">
+      <span class="stat-label">Total de Livros</span>
+      <span class="stat-value">{{ total_livros }}</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon icon-green">✅</div>
-        <div class="stat-info">
-            <span class="stat-label">Disponíveis</span>
-            <span class="stat-value">{{ livros_disponiveis }}</span>
-        </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-green">✅</div>
+    <div class="stat-info">
+      <span class="stat-label">Disponíveis</span>
+      <span class="stat-value">{{ livros_disponiveis }}</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon icon-amber">⏳</div>
-        <div class="stat-info">
-            <span class="stat-label">Emprestados / Indisponíveis</span>
-            <span class="stat-value">{{ livros_indisponiveis }}</span>
-        </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon icon-amber">⏳</div>
+    <div class="stat-info">
+      <span class="stat-label">Emprestados / Indisponíveis</span>
+      <span class="stat-value">{{ livros_indisponiveis }}</span>
     </div>
+  </div>
 </div>
 
 <div class="card recent-card">
-    <div class="card-header">
-        <div>
-            <h2>Títulos Recentes</h2>
-            <p class="card-subtitle">Últimos exemplares cadastrados no sistema</p>
-        </div>
-        <a href="{% url 'lista' %}" class="link-action">Ver catálogo completo &rarr;</a>
+  <div class="card-header">
+    <div>
+      <h2>Títulos Recentes</h2>
+      <p class="card-subtitle">Últimos exemplares cadastrados no sistema</p>
     </div>
+    <a href="{% url 'lista' %}" class="link-action"
+      >Ver catálogo completo &rarr;</a
+    >
+  </div>
 
-    {% if ultimos_livros %}
-    <div class="recent-list">
-        {% for livro in ultimos_livros %}
-        <div class="recent-item">
-            <div class="recent-main">
-                <span class="book-icon">📕</span>
-                <div>
-                    <h3 class="recent-title">{{ livro.titulo }}</h3>
-                    <p class="recent-meta">por <strong>{{ livro.autor }}</strong> &bull; Ano {{ livro.ano }}</p>
-                </div>
-            </div>
-            <div class="recent-aside">
-                {% if livro.disponivel %}
-                <span class="badge badge-success">Disponível</span>
-                {% else %}
-                <span class="badge badge-muted">Indisponível</span>
-                {% endif %}
-            </div>
+  {% if ultimos_livros %}
+  <div class="recent-list">
+    {% for livro in ultimos_livros %}
+    <div class="recent-item">
+      <div class="recent-main">
+        <span class="book-icon">📕</span>
+        <div>
+          <h3 class="recent-title">{{ livro.titulo }}</h3>
+          <p class="recent-meta">
+            por <strong>{{ livro.autor }}</strong> &bull; Ano {{ livro.ano }}
+          </p>
         </div>
-        {% endfor %}
+      </div>
+      <div class="recent-aside">
+        {% if livro.disponivel %}
+        <span class="badge badge-success">Disponível</span>
+        {% else %}
+        <span class="badge badge-muted">Indisponível</span>
+        {% endif %}
+      </div>
     </div>
-    {% else %}
-    <div class="empty-state">
-        <p class="empty-text">Ainda não há livros cadastrados no acervo.</p>
-        <a href="{% url 'novo_livro' %}" class="btn btn-primary btn-sm">+ Cadastre o primeiro livro</a>
-    </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p class="empty-text">Ainda não há livros cadastrados no acervo.</p>
+    <a href="{% url 'novo_livro' %}" class="btn btn-primary btn-sm"
+      >+ Cadastre o primeiro livro</a
+    >
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

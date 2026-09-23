@@ -31,17 +31,17 @@ O projeto contempla a arquitetura MTV (Model-Template-View), persistência com D
 
 ## 🛠️ Tecnologias
 
-| Categoria | Tecnologia |
-| --- | --- |
-| Linguagem | Python 3.12+ |
-| Framework web | Django 6.1.1 |
-| Banco de dados | PostgreSQL 16 |
-| Driver do banco | `psycopg2-binary` |
-| ORM | Django ORM |
-| Formulários | Django `ModelForm` |
-| Front-end | HTML5, CSS3 moderno e DTL (Django Template Language) |
-| Gerenciamento de ambiente | `python-dotenv` |
-| Containerização | Docker Compose |
+| Categoria                 | Tecnologia                                           |
+| ------------------------- | ---------------------------------------------------- |
+| Linguagem                 | Python 3.12+                                         |
+| Framework web             | Django 6.1.1                                         |
+| Banco de dados            | PostgreSQL 16                                        |
+| Driver do banco           | `psycopg2-binary`                                    |
+| ORM                       | Django ORM                                           |
+| Formulários               | Django `ModelForm`                                   |
+| Front-end                 | HTML5, CSS3 moderno e DTL (Django Template Language) |
+| Gerenciamento de ambiente | `python-dotenv`                                      |
+| Containerização           | Docker Compose                                       |
 
 ---
 
@@ -67,12 +67,14 @@ cd Projeto_Fullstack_6P
 ### 2. Crie e ative o ambiente virtual
 
 #### Windows (PowerShell / CMD)
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\activate
 ```
 
 #### Linux ou macOS
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
@@ -90,16 +92,19 @@ pip install -r requirements.txt
 Copie o modelo de variáveis de ambiente `.env.example` para `.env`:
 
 #### Linux / macOS:
+
 ```bash
 cp .env.example .env
 ```
 
 #### Windows:
+
 ```cmd
 copy .env.example .env
 ```
 
 O arquivo `.env` virá pré-configurado para o banco de dados Docker:
+
 ```env
 DB_NAME=biblioteca_db
 DB_USER=postgres
@@ -118,6 +123,7 @@ docker compose up -d
 ```
 
 Para pausar o contêiner:
+
 ```bash
 docker compose down
 ```
@@ -153,14 +159,14 @@ Acesse a aplicação diretamente pelo navegador:
 
 ## 🔗 Mapa de Rotas da Aplicação
 
-| Rota | Método | Descrição |
-| --- | :---: | --- |
-| [`/`](http://127.0.0.1:8000/) | GET | Homepage com estatísticas do acervo e livros recentes |
-| [`/livros/`](http://127.0.0.1:8000/livros/) | GET | Listagem de livros com status de disponibilidade e ações |
-| [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/) | GET / POST | Formulário de criação de novo livro |
-| `/livros/<id>/editar/` | GET / POST | Formulário de edição dos dados de um livro existente |
-| `/livros/<id>/excluir/` | GET / POST | Tela de confirmação e exclusão definitiva do livro |
-| [`/admin/`](http://127.0.0.1:8000/admin/) | GET / POST | Painel administrativo nativo do Django |
+| Rota                                                  |   Método   | Descrição                                                |
+| ----------------------------------------------------- | :--------: | -------------------------------------------------------- |
+| [`/`](http://127.0.0.1:8000/)                         |    GET     | Homepage com estatísticas do acervo e livros recentes    |
+| [`/livros/`](http://127.0.0.1:8000/livros/)           |    GET     | Listagem de livros com status de disponibilidade e ações |
+| [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/) | GET / POST | Formulário de criação de novo livro                      |
+| `/livros/<id>/editar/`                                | GET / POST | Formulário de edição dos dados de um livro existente     |
+| `/livros/<id>/excluir/`                               | GET / POST | Tela de confirmação e exclusão definitiva do livro       |
+| [`/admin/`](http://127.0.0.1:8000/admin/)             | GET / POST | Painel administrativo nativo do Django                   |
 
 ---
 

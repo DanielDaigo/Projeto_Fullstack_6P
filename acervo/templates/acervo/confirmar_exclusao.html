@@ -1,33 +1,31 @@
-{% extends 'acervo/base.html' %}
-
-{% block title %}Confirmar Exclusão &bull; Sistema de Biblioteca{% endblock %}
-
-{% block conteudo %}
+{% extends 'acervo/base.html' %} {% block title %}Confirmar Exclusão &bull;
+Sistema de Biblioteca{% endblock %} {% block conteudo %}
 <div class="card form-card card-danger-confirm">
-    <div class="danger-header">
-        <div class="danger-icon">⚠️</div>
-        <div>
-            <h1>Confirmar Exclusão</h1>
-            <p class="card-subtitle">Esta ação não pode ser desfeita.</p>
-        </div>
+  <div class="danger-header">
+    <div class="danger-icon">⚠️</div>
+    <div>
+      <h1>Confirmar Exclusão</h1>
+      <p class="card-subtitle">Esta ação não pode ser desfeita.</p>
     </div>
+  </div>
 
-    <div class="confirm-body">
-        <p>Você tem certeza que deseja remover o seguinte livro do acervo?</p>
-        <div class="book-highlight">
-            <h2 class="book-highlight-title">{{ livro.titulo }}</h2>
-            <p class="book-highlight-meta">
-                Autor(a): <strong>{{ livro.autor }}</strong> &bull; Ano: <strong>{{ livro.ano }}</strong>
-            </p>
-        </div>
+  <div class="confirm-body">
+    <p>Você tem certeza que deseja remover o seguinte livro do acervo?</p>
+    <div class="book-highlight">
+      <h2 class="book-highlight-title">{{ livro.titulo }}</h2>
+      <p class="book-highlight-meta">
+        Autor(a): <strong>{{ livro.autor }}</strong> &bull; Ano:
+        <strong>{{ livro.ano }}</strong>
+      </p>
     </div>
+  </div>
 
-    <form method="post" class="confirm-form-actions">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">
-            <span>🗑️ Sim, excluir permanentemente</span>
-        </button>
-        <a href="{% url 'lista' %}" class="btn btn-secondary">Cancelar e voltar</a>
-    </form>
+  <form method="post" class="confirm-form-actions">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">
+      <span>🗑️ Sim, excluir permanentemente</span>
+    </button>
+    <a href="{% url 'lista' %}" class="btn btn-secondary">Cancelar e voltar</a>
+  </form>
 </div>
 {% endblock %}
