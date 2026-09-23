@@ -7,7 +7,7 @@
     <div class="card-header">
         <div>
             <h1>Acervo de Livros</h1>
-            <p class="card-subtitle">Gerencie os títulos cadastrados no sistema</p>
+            <p class="card-subtitle">Gerencie e consulte os títulos cadastrados no sistema</p>
         </div>
         <div class="card-actions">
             <a href="{% url 'novo_livro' %}" class="btn btn-primary">
@@ -20,7 +20,45 @@
         </div>
     </div>
 
-    {% if livros %}
+    <!-- Barra de Busca e Filtros (Feature 1 - P1) -->
+    <div class="filter-section">
+        <form method="get" action="{% url 'lista' %}" class="filter-form">
+            <div class="filter-grid">
+                <div class="search-input-wrapper">
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                    <input
+                        type="text"
+                        name="q"
+                        placeholder="Buscar por título ou autor..."
+                        value="{{ request.GET.q }}"
+                        class="form-input search-input"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="select-wrapper">
+                    <select name="status" class="form-select filter-select">
+                        <option value="" {% if not request.GET.status %}selected{% endif %}>Todos os status</option>
+                        <option value="disponivel" {% if request.GET.status == 'disponivel' %}selected{% endif %}>Disponíveis</option>
+                        <option value="emprestado" {% if request.GET.status == 'emprestado' %}selected{% endif %}>Emprestados / Indisponíveis</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary btn-filter">
+                        <span>Filtrar</span>
+                    </button>
+                    {% if request.GET.q or request.GET.status %}
+                    <a href="{% url 'lista' %}" class="btn btn-secondary btn-filter" title="Limpar busca e filtros">
+                        <span>Limpar</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela de Livros com diretiva empty -->
     <div class="table-responsive">
         <table class="tabela-livros">
             <thead>
@@ -59,23 +97,30 @@
                         </div>
                     </td>
                 </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-table-cell">
+                        <div class="empty-filter-state">
+                            <div class="empty-icon-small">🔍</div>
+                            <p class="empty-title">Nenhum livro encontrado</p>
+                            <p class="empty-text">
+                                {% if request.GET.q or request.GET.status %}
+                                Não há livros que correspondam aos filtros de busca informados.
+                                {% else %}
+                                Seu acervo ainda não possui exemplares cadastrados.
+                                {% endif %}
+                            </p>
+                            {% if request.GET.q or request.GET.status %}
+                            <a href="{% url 'lista' %}" class="btn btn-secondary btn-sm">Limpar Filtros</a>
+                            {% else %}
+                            <a href="{% url 'novo_livro' %}" class="btn btn-primary btn-sm">+ Cadastrar Primeiro Livro</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-icon">📚</div>
-        <h2>Nenhum livro encontrado</h2>
-        <p class="empty-text">Seu acervo ainda não possui exemplares cadastrados.</p>
-        <a href="{% url 'novo_livro' %}" class="btn btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <span>Cadastrar Primeiro Livro</span>
-        </a>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

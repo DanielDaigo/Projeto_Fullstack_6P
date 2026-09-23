@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db.models import Q
 from .models import Livro
 from .forms import LivroForm
 
@@ -16,11 +17,39 @@ def home(request):
     return render(request, 'acervo/home.html', context)
 
 def lista_livros(request):
-    livros = Livro.objects.all().order_by('titulo')
+    """
+    Feature 1 (P1): Busca e Filtro na Listagem de Livros
+    - Captura 'q' (busca textual) e 'status' (disponibilidade) via request.GET
+    - Utiliza icontains e objetos Q para busca simultânea em título OU autor
+    - Permite combinar busca textual com filtro de status de forma aditiva
+    """
+    termo_busca = request.GET.get('q', '').strip()
+    filtro_status = request.GET.get('status', '').strip()
+
+    livros = Livro.objects.all()
+
+    # Busca textual simultânea em título OU autor usando Q objects
+    if termo_busca:
+        livros = livros.filter(
+            Q(titulo__icontains=termo_busca) | Q(autor__icontains=termo_busca)
+        )
+
+    # Filtro por status de disponibilidade
+    if filtro_status == 'disponivel':
+        livros = livros.filter(disponivel=True)
+    elif filtro_status == 'emprestado':
+        livros = livros.filter(disponivel=False)
+
+    livros = livros.order_by('titulo')
+
     return render(
         request, 
         'acervo/lista.html', 
-        {'livros': livros}
+        {
+            'livros': livros,
+            'termo_busca': termo_busca,
+            'filtro_status': filtro_status,
+        }
     )
 
 def novo_livro(request):
