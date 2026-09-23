@@ -1,32 +1,77 @@
-{% extends 'acervo/base.html' %} {% block conteudo %}
-<div class="card">
-  <div class="card-header">
-    <h1>Cadastrar Novo Livro</h1>
-  </div>
+{% extends 'acervo/base.html' %}
 
-  <form method="post">
-    {% csrf_token %}
-    <div
-      style="
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      "
-    >
-      {{ form.as_p }}
+{% block title %}{{ titulo_pagina|default:"Formulário de Livro" }} &bull; Sistema de Biblioteca{% endblock %}
+
+{% block conteudo %}
+<div class="card form-card">
+    <div class="card-header">
+        <div>
+            <h1>{{ titulo_pagina|default:"Cadastrar Novo Livro" }}</h1>
+            <p class="card-subtitle">Preencha os campos abaixo para salvar no banco de dados</p>
+        </div>
+        <a href="{% url 'lista' %}" class="link-action">&larr; Voltar para a lista</a>
     </div>
-    <button type="submit" class="btn">Salvar Livro</button>
-    <a
-      href="{% url 'lista' %}"
-      style="
-        margin-left: 1rem;
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-      "
-      >Cancelar</a
-    >
-  </form>
+
+    <form method="post" novalidate class="modern-form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-error">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                    {{ form.titulo.label }} <span class="required">*</span>
+                </label>
+                {{ form.titulo }}
+                {% if form.titulo.errors %}
+                <div class="field-error">{{ form.titulo.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.autor.id_for_label }}" class="form-label">
+                    {{ form.autor.label }} <span class="required">*</span>
+                </label>
+                {{ form.autor }}
+                {% if form.autor.errors %}
+                <div class="field-error">{{ form.autor.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.ano.id_for_label }}" class="form-label">
+                    {{ form.ano.label }} <span class="required">*</span>
+                </label>
+                {{ form.ano }}
+                {% if form.ano.errors %}
+                <div class="field-error">{{ form.ano.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group form-group-checkbox">
+                <label class="checkbox-label" for="{{ form.disponivel.id_for_label }}">
+                    {{ form.disponivel }}
+                    <span class="checkbox-custom"></span>
+                    <span class="checkbox-text">{{ form.disponivel.label }}</span>
+                </label>
+                {% if form.disponivel.errors %}
+                <div class="field-error">{{ form.disponivel.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-md">
+                <span>💾 {{ botao_texto|default:"Salvar Livro" }}</span>
+            </button>
+            <a href="{% url 'lista' %}" class="btn btn-secondary btn-md">Cancelar</a>
+        </div>
+    </form>
 </div>
 {% endblock %}

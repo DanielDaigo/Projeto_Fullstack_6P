@@ -1,6 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from .models import Livro
 from .forms import LivroForm
+
 def home(request):
     total_livros = Livro.objects.count()
     livros_disponiveis = Livro.objects.filter(disponivel=True).count()
@@ -14,7 +16,7 @@ def home(request):
     return render(request, 'acervo/home.html', context)
 
 def lista_livros(request):
-    livros = Livro.objects.all()
+    livros = Livro.objects.all().order_by('titulo')
     return render(
         request, 
         'acervo/lista.html', 
@@ -25,9 +27,42 @@ def novo_livro(request):
     if request.method == 'POST':
         form = LivroForm(request.POST)
         if form.is_valid():
-            form.save()          # grava no banco PostgreSQL
-            return redirect('lista')  # redireciona de volta para a lista
+            livro = form.save()
+            messages.success(request, f'Livro "{livro.titulo}" cadastrado com sucesso!')
+            return redirect('lista')
     else:
-        form = LivroForm()       # requisição GET: formulário em branco
+        form = LivroForm()
     
-    return render(request, 'acervo/form.html', {'form': form})
+    return render(request, 'acervo/form.html', {
+        'form': form,
+        'titulo_pagina': 'Cadastrar Novo Livro',
+        'botao_texto': 'Salvar Livro',
+    })
+
+def editar_livro(request, pk):
+    livro = get_object_or_404(Livro, pk=pk)
+    if request.method == 'POST':
+        form = LivroForm(request.POST, instance=livro)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Livro "{livro.titulo}" atualizado com sucesso!')
+            return redirect('lista')
+    else:
+        form = LivroForm(instance=livro)
+    
+    return render(request, 'acervo/form.html', {
+        'form': form,
+        'livro': livro,
+        'titulo_pagina': f'Editar: {livro.titulo}',
+        'botao_texto': 'Salvar Alterações',
+    })
+
+def excluir_livro(request, pk):
+    livro = get_object_or_404(Livro, pk=pk)
+    if request.method == 'POST':
+        titulo = livro.titulo
+        livro.delete()
+        messages.success(request, f'Livro "{titulo}" excluído com sucesso!')
+        return redirect('lista')
+    
+    return render(request, 'acervo/confirmar_exclusao.html', {'livro': livro})

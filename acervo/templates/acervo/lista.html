@@ -1,33 +1,71 @@
-{% extends 'acervo/base.html' %} {% block conteudo %}
-<div class="card">
-  <div class="card-header">
-    <h1>Acervo de Livros</h1>
-    <a href="{% url 'novo_livro' %}" class="btn">+ Novo Livro</a>
-  </div>
+{% extends 'acervo/base.html' %}
 
-  <table class="tabela-livros">
-    <thead>
-      <tr>
-        <th>Título</th>
-        <th>Autor</th>
-        <th>Ano</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for livro in livros %}
-      <tr>
-        <td><strong>{{ livro.titulo }}</strong></td>
-        <td>{{ livro.autor }}</td>
-        <td>{{ livro.ano }}</td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="3" style="text-align: center; color: var(--text-muted)">
-          Nenhum livro cadastrado.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% block title %}Acervo de Livros &bull; Sistema de Biblioteca{% endblock %}
+
+{% block conteudo %}
+<div class="card table-card">
+    <div class="card-header">
+        <div>
+            <h1>Acervo de Livros</h1>
+            <p class="card-subtitle">Gerencie os títulos cadastrados no sistema</p>
+        </div>
+        <div class="card-actions">
+            <a href="{% url 'novo_livro' %}" class="btn btn-primary">
+                <span>➕ Cadastrar Livro</span>
+            </a>
+        </div>
+    </div>
+
+    {% if livros %}
+    <div class="table-responsive">
+        <table class="tabela-livros">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Autor</th>
+                    <th>Ano</th>
+                    <th>Disponibilidade</th>
+                    <th class="text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for livro in livros %}
+                <tr>
+                    <td class="font-medium text-main">
+                        <span class="book-row-icon">📖</span>
+                        {{ livro.titulo }}
+                    </td>
+                    <td class="text-muted">{{ livro.autor }}</td>
+                    <td><span class="year-pill">{{ livro.ano }}</span></td>
+                    <td>
+                        {% if livro.disponivel %}
+                        <span class="badge badge-success">Disponível</span>
+                        {% else %}
+                        <span class="badge badge-muted">Indisponível</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        <div class="actions-group">
+                            <a href="{% url 'editar_livro' livro.pk %}" class="btn-action btn-edit" title="Editar livro">
+                                ✏️ Editar
+                            </a>
+                            <a href="{% url 'excluir_livro' livro.pk %}" class="btn-action btn-delete" title="Excluir livro">
+                                🗑️ Excluir
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <h2>Nenhum livro encontrado</h2>
+        <p class="empty-text">Seu acervo ainda não possui exemplares cadastrados.</p>
+        <a href="{% url 'novo_livro' %}" class="btn btn-primary">+ Cadastrar Primeiro Livro</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
