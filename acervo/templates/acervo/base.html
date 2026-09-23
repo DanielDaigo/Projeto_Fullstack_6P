@@ -3,22 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biblioteca</title>
+    <title>{% block title %}Sistema de Biblioteca{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     {% load static %}
     <link rel="stylesheet" href="{% static 'acervo/estilo.css' %}">
 </head>
 <body>
-    <header>
-        <h2>Sistema de Biblioteca</h2>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'home' %}" class="brand">
+                <span class="brand-icon">📚</span>
+                <span class="brand-text">Biblio<strong>Tech</strong></span>
+            </a>
+            <nav class="nav-links">
+                <a href="{% url 'home' %}" class="nav-item">Início</a>
+                <a href="{% url 'lista' %}" class="nav-item">Acervo de Livros</a>
+                <a href="{% url 'novo_livro' %}" class="nav-item nav-btn">+ Cadastrar Livro</a>
+                <a href="/admin/" target="_blank" class="nav-item nav-outline" title="Acessar painel administrativo">Admin ↗</a>
+            </nav>
+        </div>
     </header>
 
-    <main>
+    <main class="main-content">
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <span class="alert-icon">
+                    {% if message.tags == 'success' %}✓{% elif message.tags == 'error' or message.tags == 'danger' %}⚠{% else %}ℹ{% endif %}
+                </span>
+                <span class="alert-text">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% block conteudo %}
         {% endblock %}
     </main>
 
-    <footer>
-        <p>&copy; 2026 - Engenharia de Software</p>
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2026 Sistema de Biblioteca &bull; Laboratório de Programação Full Stack</p>
+        </div>
     </footer>
 </body>
 </html>

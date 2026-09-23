@@ -1,6 +1,17 @@
 from django.shortcuts import render, redirect
 from .models import Livro
 from .forms import LivroForm
+def home(request):
+    total_livros = Livro.objects.count()
+    livros_disponiveis = Livro.objects.filter(disponivel=True).count()
+    ultimos_livros = Livro.objects.order_by('-id')[:5]
+    context = {
+        'total_livros': total_livros,
+        'livros_disponiveis': livros_disponiveis,
+        'livros_indisponiveis': total_livros - livros_disponiveis,
+        'ultimos_livros': ultimos_livros,
+    }
+    return render(request, 'acervo/home.html', context)
 
 def lista_livros(request):
     livros = Livro.objects.all()
