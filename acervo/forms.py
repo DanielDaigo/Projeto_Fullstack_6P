@@ -1,3 +1,4 @@
+import datetime
 from django import forms
 from .models import Livro
 
@@ -30,3 +31,14 @@ class LivroForm(forms.ModelForm):
                 'class': 'form-checkbox',
             }),
         }
+
+    def clean_ano(self):
+        """
+        Regra de negócio obrigatória (P1):
+        O ano de publicação do livro não pode ser um ano futuro.
+        """
+        ano = self.cleaned_data.get('ano')
+        ano_atual = datetime.date.today().year
+        if ano is not None and ano > ano_atual:
+            raise forms.ValidationError("O ano de publicação não pode ser superior ao ano atual.")
+        return ano
