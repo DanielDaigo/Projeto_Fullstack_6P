@@ -221,6 +221,7 @@ Acesse a aplicação diretamente pelo navegador:
 │   └── wsgi.py                     # Interface WSGI
 ├── docker-compose.yml              # Serviço PostgreSQL em contêiner
 ├── .env.example                    # Modelo versionado de variáveis de ambiente
+├── .prettierignore                 # Proteção de formatação para templates DTL
 ├── manage.py                       # CLI do Django
 ├── requirements.txt                # Dependências Python (UTF-8)
 └── README.md                       # Documentação técnica do projeto
