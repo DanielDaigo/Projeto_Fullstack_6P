@@ -1,8 +1,7 @@
 from django.db import models
+from core.models import DaOrganizacao
 
-# Create your models here.
-
-class Livro(models.Model):
+class Livro(DaOrganizacao):
     titulo = models.CharField(max_length=200)
     autor = models.CharField(max_length=100)
     ano = models.IntegerField()
