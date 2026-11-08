@@ -21,6 +21,11 @@
           <span class="brand-text">Biblio<strong>Tech</strong></span>
         </a>
         <nav class="nav-links">
+          {% if request.user.is_authenticated and request.user.perfil %}
+          <span class="tenant-badge" title="Organização Ativa" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">
+            🏢 {{ request.user.perfil.organizacao.nome }}
+          </span>
+          {% endif %}
           <a href="{% url 'home' %}" class="nav-item">Início</a>
           <a href="{% url 'lista' %}" class="nav-item">Acervo de Livros</a>
           <a href="{% url 'novo_livro' %}" class="nav-item nav-btn">+ Cadastrar Livro</a>
