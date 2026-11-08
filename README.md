@@ -4,19 +4,29 @@
 [![Django](https://img.shields.io/badge/Django-6.1.1-092E20?logo=django)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-P1%20Conclu%C3%ADda%20%7C%20CRUD%20Completo-brightgreen)]()
+[![Status](https://img.shields.io/badge/Status-Aula%2014%20Conclu%C3%ADda%20%7C%20Multi--tenancy-blue)]()
 
-Aplicação web desenvolvida com **Django** e **PostgreSQL** para gerenciamento completo de um acervo de livros, com foco em arquitetura limpa, segurança e experiência do usuário (UI/UX contemporânea), atendendo a todos os requisitos da entrega da **P1** de Laboratório de Programação Full Stack (Universidade de Vassouras).
+Aplicação web desenvolvida com **Django** e **PostgreSQL** para gerenciamento de um acervo de livros em formato **Mini-SaaS Multi-tenant**, atendendo aos requisitos práticos da disciplina de Laboratório de Programação Full Stack (Universidade de Vassouras - Prof. Márcio Garrido).
 
-O projeto contempla a arquitetura MTV (Model-Template-View), persistência com Django ORM, operações completas de CRUD (Create, Read, Update, Delete), busca textual com objetos `Q`, filtro dinâmico de status, validações customizadas no `ModelForm`, homepage integrada na raiz (`/`), painel administrativo nativo com Django Admin, herança de templates e proteção contra CSRF.
+O projeto evoluiu da entrega da P1 (CRUD, filtros com objetos `Q` e validações em `ModelForm`) para uma arquitetura multi-organização (Aula 14), com isolamento estrito de dados por inquilino (*tenant*), herança de modelo via classe abstrata `DaOrganizacao`, proteção contra IDOR (*Insecure Direct Object Reference*), migração em 3 etapas com zero perda de dados e suíte de testes automatizados.
 
-> **Status atual:** CRUD 100% implementado e funcional, com busca, filtros dinâmicos e validação customizada para a P1.
+> **Status atual:** Aula 14 concluída com sucesso. Multi-tenancy implementado via coluna discriminadora (`organizacao_id`), consultas 100% isoladas e 5 testes automatizados aprovados.
 
 ---
 
 ## 🚀 Funcionalidades
 
-- [x] **Homepage intuitiva na raiz (`/`)**: dashboard com métricas do acervo (total, disponíveis, indisponíveis) e títulos recentes
+### Multi-organização & Isolamento de Dados (Aula 14)
+- [x] **Arquitetura Multi-tenant (Coluna Discriminadora)**: Cada inquilino/organização possui acesso estritamente aos seus próprios dados.
+- [x] **App `core` Transversal**: Modelos `Organizacao`, classe abstrata `DaOrganizacao` e `Perfil` (OneToOne com `User`).
+- [x] **Migração Segura em 3 Etapas**: Inclusão de chave estrangeira permitindo nulo (`null=True`), preenchimento via `RunPython` com a *"Organização Padrão"* e transição final para não nulo (`null=False`) com zero perda dos dados legados da P1.
+- [x] **Regra de Ouro nas Consultas**: Todas as views e listagens filtram com `filter(organizacao=org_atual(request))`.
+- [x] **Prevenção de IDOR (Insecure Direct Object Reference)**: Rotas de edição e exclusão usam `get_object_or_404(Livro, pk=pk, organizacao=org)`, retornando 404 seguro ao tentar manipular IDs de outros inquilinos.
+- [x] **Injeção Segura na Criação**: O campo `organizacao` nunca é exposto no formulário HTML; é injetado diretamente no servidor via `form.save(commit=False)`.
+- [x] **Suíte de Testes Automatizados de Isolamento**: 5 testes cobrindo isolamento de leitura, blindagem contra IDOR na edição/exclusão, criação vinculada ao tenant e bloqueio anônimo.
+
+### Funcionalidades do Acervo (P1)
+- [x] **Homepage intuitiva na raiz (`/`)**: dashboard com métricas do acervo do tenant (total, disponíveis, indisponíveis) e títulos recentes
 - [x] **Busca Textual Inteligente (Feature P1)**: pesquisa simultânea por título OU autor com insensibilidade a maiúsculas/minúsculas usando objetos `Q` (`Q(titulo__icontains=...) | Q(autor__icontains=...)`)
 - [x] **Filtro Dinâmico por Status (Feature P1)**: refinamento de livros por disponibilidade (Disponíveis / Emprestados) combinável com a busca textual
 - [x] **Preservação de Estado nos Filtros**: inputs de busca e seletores mantêm os valores após a submissão via parâmetros HTTP GET (`request.GET`)
@@ -28,9 +38,8 @@ O projeto contempla a arquitetura MTV (Model-Template-View), persistência com D
   - **Delete**: exclusão com tela dedicada de confirmação segura (prevenção contra deleções acidentais via `POST`)
 - [x] **Validação Customizada de Negócio (Feature P1)**: método `clean_ano()` no `LivroForm` impedindo que livros sejam cadastrados com ano de publicação futuro (`datetime.date.today().year`)
 - [x] **Feedback visual instantâneo**: integração com o framework `django.contrib.messages` (alertas toast de sucesso, erro e atenção)
-- [x] **Painel de gestão integrado**: Django Admin habilitado e configurado para o model `Livro`
-- [x] **Interface moderna e responsiva**: design system com paleta equilibrada, tipografia Inter, cards, micro-interações e compatibilidade mobile
-- [x] **Segurança e boas práticas**: proteção contra CSRF em todos os formulários e segredos isolados via `python-dotenv`
+- [x] **Painel de gestão integrado**: Django Admin habilitado com filtros por organização e disponibilidade
+- [x] **Interface moderna e responsiva**: design system com paleta equilibrada, tipografia Inter, cards, micro-interações e identificador visual da organização ativa
 
 ---
 
@@ -196,35 +205,77 @@ Acesse a aplicação diretamente pelo navegador:
 
 ---
 
+## 🏢 Arquitetura Multi-Tenant & Roteiro de Testes (Aula 14)
+
+### Estratégia de Isolamento
+Foi adotada a estratégia de **Coluna Discriminadora** (`organizacao_id` via chave estrangeira com `on_delete=models.PROTECT`), centralizada na classe abstrata `DaOrganizacao` do app `core`. Todo modelo de negócio herda de `DaOrganizacao`.
+
+O usuário do Django (`User`) é estendido através de um relacionamento `OneToOneField` com `Perfil`, associando cada operador/administrador à sua organização.
+
+### Migração em 3 Etapas (Zero Perda de Dados)
+1. **Etapa 1 (`0002_livro_org_null`):** Adicionou a foreign key `organizacao` permitindo valores nulos temporariamente.
+2. **Etapa 2 (`0003_dados_org`):** Migração de dados com `migrations.RunPython`, criando a *"Organização Padrão"* e vinculando tanto os livros legados da P1 quanto os usuários existentes.
+3. **Etapa 3 (`0004_livro_org_not_null`):** Tornou a chave estrangeira estritamente obrigatória (`null=False`).
+
+### Roteiro de Testes Executado
+A suíte em `acervo/tests.py` foi executada e validou os 4 cenários fundamentais:
+
+| Cenário de Teste | Ação Executada | Resultado Esperado | Status |
+| :--- | :--- | :--- | :---: |
+| **1. Isolamento de Listagem** | Usuário A consulta a listagem em `/livros/` | Enxerga apenas os livros pertencentes à Organização A | ✅ Aprovado |
+| **2. Blindagem contra IDOR na Edição** | Usuário A tenta abrir `/livros/<ID-da-B>/editar/` | Retorna status **404 Not Found** (sem revelar existência do ID) | ✅ Aprovado |
+| **3. Injeção Servidor na Criação** | Usuário A submete formulário de novo livro | Livro gravado automaticamente com FK vinculada à Organização A | ✅ Aprovado |
+| **4. Blindagem contra IDOR na Exclusão** | Usuário A tenta GET ou POST em `/livros/<ID-da-B>/excluir/` | Retorna status **404 Not Found** e registro da Organização B preservado | ✅ Aprovado |
+| **5. Bloqueio de Acesso Anônimo** | Usuário deslogado tenta acessar telas de negócio | Redirecionamento 302 compulsório para o fluxo de autenticação | ✅ Aprovado |
+
+Para rodar os testes:
+```bash
+python manage.py test acervo
+```
+
+### Usuários de Teste Configurados
+- **Usuário 1:** `operador_central` (Senha: `senha123`) &bull; Organização: **Biblioteca Central**
+- **Usuário 2:** `operador_universitaria` (Senha: `senha123`) &bull; Organização: **Biblioteca Universitária**
+- **Superusuário:** `Daniel` &bull; Organização: **Organização padrão**
+
+---
+
 ## 📂 Estrutura do Projeto
 
 ```text
 .
-├── acervo/                         # Aplicação de gestão do acervo
-│   ├── migrations/                 # Histórico de migrações do banco
+├── acervo/                         # Aplicação de gestão do acervo de livros
+│   ├── migrations/                 # Histórico de migrações (inclui migração de dados)
 │   │   ├── 0001_initial.py
-│   │   └── __init__.py
+│   │   ├── 0002_livro_org_null.py
+│   │   ├── 0003_dados_org.py
+│   │   └── 0004_livro_org_not_null.py
 │   ├── static/acervo/              # Folhas de estilo (CSS moderno)
 │   │   └── estilo.css
 │   ├── templates/acervo/           # Templates HTML integrados ao DTL
-│   │   ├── base.html               # Layout base e navbar global
-│   │   ├── home.html               # Página inicial (dashboard de métricas)
-│   │   ├── lista.html              # Listagem de livros e ações
+│   │   ├── base.html               # Layout base com badge da organização ativa
+│   │   ├── home.html               # Página inicial (dashboard de métricas da org)
+│   │   ├── lista.html              # Listagem isolada por organização e ações
 │   │   ├── form.html               # Formulário unificado (cadastro e edição)
-│   │   └── confirmar_exclusao.html # Tela de confirmação segura de deleção
-│   ├── admin.py                    # Registro no Django Admin
+│   │   └── confirmar_exclusao.html # Confirmação segura de deleção com proteção IDOR
+│   ├── admin.py                    # Registro no Django Admin com filtros por organização
 │   ├── apps.py                     # Configuração do app
-│   ├── forms.py                    # Definição do ModelForm (LivroForm)
-│   ├── models.py                   # Model Livro (ORM)
-│   ├── tests.py                    # Suíte de testes automatizados
+│   ├── forms.py                    # ModelForm sem expor o campo organizacao
+│   ├── models.py                   # Model Livro herdando de DaOrganizacao
+│   ├── tests.py                    # Suíte de testes de isolamento multi-tenant
 │   ├── urls.py                     # Rotas internas do app
-│   └── views.py                    # Lógica de negócio e CRUD
+│   └── views.py                    # Lógica de negócio, org_atual e @login_required
 ├── biblioteca/                     # Núcleo de configuração do projeto
-│   ├── asgi.py                     # Interface ASGI
-│   ├── settings.py                 # Configurações do Django e banco
+│   ├── settings.py                 # Configurações do Django, banco e autenticação
 │   ├── urls.py                     # Roteador central raiz
 │   └── wsgi.py                     # Interface WSGI
+├── core/                           # App transversal de infraestrutura e multi-tenancy
+│   ├── migrations/                 # Migração inicial dos modelos do core
+│   │   └── 0001_initial.py
+│   ├── admin.py                    # Administração de Organizacao e Perfil
+│   └── models.py                   # Modelos Organizacao, DaOrganizacao e Perfil
 ├── docker-compose.yml              # Serviço PostgreSQL em contêiner
+├── MELHORIAS_P1.md                 # Documento de débito técnico e melhorias pós-P1
 ├── .env.example                    # Modelo versionado de variáveis de ambiente
 ├── .prettierignore                 # Proteção de formatação para templates DTL
 ├── manage.py                       # CLI do Django
