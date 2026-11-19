@@ -1,36 +1,31 @@
 # Melhorias P1 & Débito Técnico &bull; Road to Mini-SaaS (P2)
 
-Este documento registra a revisão técnica da entrega da **P1** do projeto **Biblioteca / Acervo** (Laboratório de Programação Full Stack - Prof. Márcio Garrido), apontando os itens de fragilidade identificados e o plano de evolução incremental até a **P2** (Aulas 13 a 20).
+Este documento registra a revisão técnica da entrega da **P1** do projeto **Biblioteca / Acervo** (Laboratório de Programação Full Stack - Prof. Márcio Garrido), acompanhando a resolução incremental de cada débito técnico até a **P2** (Aulas 13 a 17).
 
 ---
 
 ## 📌 Diagnóstico da P1 e Ações Corretivas
 
-### 1. Ausência de Isolamento de Dados entre Clientes (Multi-tenancy)
-* **Diagnóstico na P1:** Todos os livros cadastrados pertenciam a uma base global única. Qualquer usuário no sistema visualizava, editava ou excluía registros de outros estabelecimentos/inquilinos.
-* **Impacto:** Inviabilidade de operação como SaaS e risco crítico de vazamento de dados (*data leak*).
-* **Solução Implementada (Aula 14):** Criação do app `core` com os modelos `Organizacao`, classe abstrata `DaOrganizacao` e `Perfil` (OneToOne com `User`). Migração segura em 3 etapas sem perda dos dados da P1 e filtro compulsório `filter(organizacao=org)` em todas as consultas.
+### 1. Ausência de Isolamento de Dados entre Clientes (Multi-tenancy) — ✅ Resolvido (Aula 14)
+* **Diagnóstico na P1:** Todos os livros cadastrados pertenciam a uma base global única.
+* **Solução Implementada:** Criação do app `core` com `Organizacao`, classe abstrata `DaOrganizacao` e `Perfil`. Migração segura em 3 etapas (`null=True` → `RunPython` → `null=False`) sem perda de dados da P1 e filtro compulsório `filter(organizacao=org)` em todas as consultas.
 
-### 2. Vulnerabilidade a IDOR (Insecure Direct Object Reference)
-* **Diagnóstico na P1:** As rotas de edição (`/livros/<id>/editar/`) e exclusão (`/livros/<id>/excluir/`) recuperavam instâncias apenas pela chave primária (`get_object_or_404(Livro, pk=pk)`).
-* **Impacto:** Alterando o número do ID na URL, um usuário de uma biblioteca poderia editar ou excluir livros de outra.
-* **Solução Implementada (Aula 14):** Blindagem via `get_object_or_404(Livro, pk=pk, organizacao=org_atual(request))`, retornando HTTP 404 (Not Found) caso o registro pertença a outro inquilino, não revelando sequer sua existência.
+### 2. Vulnerabilidade a IDOR (Insecure Direct Object Reference) — ✅ Resolvido (Aula 14)
+* **Diagnóstico na P1:** Edição e exclusão recuperavam instâncias apenas por `pk`.
+* **Solução Implementada:** Blindagem via `get_object_or_404(Livro, pk=pk, organizacao=org_atual(request))`, retornando HTTP 404 para registros de outras organizações, e filtragem de querysets nos `ModelForm` (`EmprestimoForm`).
 
-### 3. Autenticação Genérica e Falta de Controle de Acesso por Papel (RBAC)
-* **Diagnóstico na P1:** Dependência do login nativo do Django Admin; ausência de diferenciação entre quem pode apenas operar/consultar e quem pode administrar o sistema.
-* **Impacto:** Falta de rastreabilidade e incapacidade de conceder permissões parciais aos colaboradores da biblioteca.
-* **Plano de Solução (Aula 15):** Implementação de tela própria de Login/Logout integrada ao design system e adição de papéis (`admin` vs `operador`) no modelo `Perfil`, com decoradores de permissão customizados.
+### 3. Autenticação Genérica e Falta de Controle de Acesso por Papel (RBAC) — ✅ Resolvido (Aulas 13/15/17)
+* **Diagnóstico na P1:** Dependência do login nativo do Django Admin e ausência de distinção de papéis.
+* **Solução Implementada:** Adição do campo `papel` (`admin` / `operador`) e propriedade `eh_admin` em `Perfil`, decorator `@papel_requerido('admin')` em `core/decorators.py`, tela própria de login/logout e restrição de séries temporais e exportação CSV apenas para administradores.
 
-### 4. Interface Estritamente Server-Side sem API REST
-* **Diagnóstico na P1:** A aplicação funcionava apenas via DTL (Django Template Language), sem oferecer pontos de integração para terceiros, front-ends desacoplados ou aplicativos móveis.
-* **Impacto:** Acoplamento monolítico rígido e impossibilidade de integração automatizada com outros serviços.
-* **Plano de Solução (Aulas 16 a 19):** Instalação do Django REST Framework (DRF), criação de `LivroSerializer`, `ModelViewSet`, paginação, filtros e autenticação por token com isolamento estrito por tenant.
+### 4. Interface Estritamente Server-Side sem API REST — ✅ Resolvido (Aula 13 + Aula 17)
+* **Diagnóstico na P1:** A aplicação operava apenas com renderização HTML via templates DTL.
+* **Solução Implementada:** Instalação do Django REST Framework (DRF), `LivroSerializer` (replicando a validação de ano futuro), `LeitorSerializer`, `EmprestimoSerializer`, endpoints CRUD isolados por tenant em `/api/` e `DashboardApi` (`/api/dashboard/`) reaproveitando `acervo/dashboard.py`.
 
-### 5. Métricas Analíticas Básicas no Dashboard
-* **Diagnóstico na P1:** A tela inicial calculava apenas contagens diretas (`count()`) sem métricas de agregação avançadas.
-* **Impacto:** Pouco valor gerencial para os gestores da biblioteca.
-* **Plano de Solução (Aula 17):** Enriquecimento do Dashboard com consultas ORM analíticas (`aggregate`, `annotate`, `Count`, agrupamentos por autor e histórico).
+### 5. Métricas Analíticas Básicas e Risco de Consultas N+1 — ✅ Resolvido (Aula 17)
+* **Diagnóstico na P1:** A tela inicial fazia apenas contagens simples e não havia métricas analíticas nem proteção contra consultas N+1.
+* **Solução Implementada:** Dashboard completo em `/dashboard/` com 4 métricas ORM (`aggregate`, `Count` com `filter=Q(...)`, `values` + `annotate`, `TruncMonth`), filtro por período validado (`PeriodoForm`), gráficos em Chart.js via `json_script`, índice em `Emprestimo.data_saida`, uso de `select_related('livro', 'leitor')`, exportação CSV sanitizada contra formula injection e testes automatizados com `assertNumQueries`.
 
 ---
 
-> Documento de controle e rastreabilidade da P2. Atualizado continuamente a cada aula.
+> Todos os 5 débitos técnicos levantados após a P1 foram integralmente solucionados e validados por 16 testes automatizados.

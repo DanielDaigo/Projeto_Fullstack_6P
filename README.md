@@ -4,13 +4,17 @@
 [![Django](https://img.shields.io/badge/Django-6.1.1-092E20?logo=django)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-Aula%2014%20Conclu%C3%ADda%20%7C%20Multi--tenancy-blue)]()
+[![Status](https://img.shields.io/badge/Status-Mini--SaaS%20P2%20%7C%20Aulas%2013--17%20Conclu%C3%ADdas-brightgreen)]()
 
-Aplicação web desenvolvida com **Django** e **PostgreSQL** para gerenciamento de um acervo de livros em formato **Mini-SaaS Multi-tenant**, atendendo aos requisitos práticos da disciplina de Laboratório de Programação Full Stack (Universidade de Vassouras - Prof. Márcio Garrido).
+Aplicação web desenvolvida com **Django**, **Django REST Framework (DRF)** e **PostgreSQL** para gerenciamento de um acervo de livros e empréstimos em formato **Mini-SaaS Multi-tenant**, atendendo a todos os 4 pilares da **P2** da disciplina de Laboratório de Programação Full Stack (Universidade de Vassouras - Prof. Márcio Garrido).
 
-O projeto evoluiu da entrega da P1 (CRUD, filtros com objetos `Q` e validações em `ModelForm`) para uma arquitetura multi-organização (Aula 14), com isolamento estrito de dados por inquilino (*tenant*), herança de modelo via classe abstrata `DaOrganizacao`, proteção contra IDOR (*Insecure Direct Object Reference*), migração em 3 etapas com zero perda de dados e suíte de testes automatizados.
+O projeto reúne:
+1. **Multi-organização (Aula 14):** isolamento de dados por coluna discriminadora (`DaOrganizacao`), migração segura em 3 etapas e proteção contra IDOR.
+2. **Perfis de Acesso e Papéis (Aulas 13/15/17):** `Perfil` com papéis `Administrador` e `Operador`, `@papel_requerido('admin')` e fluxo dedicado de Login/Logout.
+3. **API REST com DRF (Aulas 13/16/17):** endpoints autenticados e isolados por organização em `/api/livros/`, `/api/leitores/`, `/api/emprestimos/` e `/api/dashboard/`.
+4. **Dashboard Gerencial e Relatórios (Aula 17):** 4 métricas ORM (`aggregate`, `annotate`, `TruncMonth`, `Count` com `filter=Q(...)`), filtro por período validado (`PeriodoForm`), gráficos em Chart.js via `json_script`, otimização contra N+1 (`select_related` + índice em `data_saida` + `assertNumQueries`) e exportação CSV sanitizada contra formula injection.
 
-> **Status atual:** Aula 14 concluída com sucesso. Multi-tenancy implementado via coluna discriminadora (`organizacao_id`), consultas 100% isoladas e 5 testes automatizados aprovados.
+> **Status atual:** Todos os 4 pilares da P2 (Aulas 13 a 17) implementados e validados por **16 testes automatizados** (`python manage.py test`).
 
 ---
 
@@ -173,14 +177,25 @@ Acesse a aplicação diretamente pelo navegador:
 
 ## 🔗 Mapa de Rotas da Aplicação
 
-| Rota                                                  |   Método   | Descrição                                                                   |
-| ----------------------------------------------------- | :--------: | --------------------------------------------------------------------------- |
-| [`/`](http://127.0.0.1:8000/)                         |    GET     | Homepage com estatísticas do acervo e livros recentes                       |
-| [`/livros/`](http://127.0.0.1:8000/livros/)           |    GET     | Listagem de livros com busca textual (Q objects), filtros de status e ações |
-| [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/) | GET / POST | Formulário de criação de novo livro                                         |
-| `/livros/<id>/editar/`                                | GET / POST | Formulário de edição dos dados de um livro existente                        |
-| `/livros/<id>/excluir/`                               | GET / POST | Tela de confirmação e exclusão definitiva do livro                          |
-| [`/admin/`](http://127.0.0.1:8000/admin/)             | GET / POST | Painel administrativo nativo do Django                                      |
+| Rota                                                                        |      Método      | Descrição                                                                                 |
+| --------------------------------------------------------------------------- | :--------------: | ----------------------------------------------------------------------------------------- |
+| [`/`](http://127.0.0.1:8000/)                                               |       GET        | Homepage com estatísticas do acervo e livros recentes (isolado por organização)           |
+| [`/login/`](http://127.0.0.1:8000/login/)                                   |    GET / POST    | Autenticação de usuários no sistema                                                       |
+| `/logout/`                                                                  |       POST       | Encerramento seguro da sessão                                                             |
+| [`/dashboard/`](http://127.0.0.1:8000/dashboard/)                           |       GET        | Dashboard gerencial com 4 métricas ORM, filtro de período (`PeriodoForm`) e Chart.js      |
+| [`/dashboard/exportar-csv/`](http://127.0.0.1:8000/dashboard/exportar-csv/) |       GET        | Exportação CSV sanitizada dos empréstimos filtrados (restrito ao papel `Administrador`)   |
+| [`/livros/`](http://127.0.0.1:8000/livros/)                                 |       GET        | Listagem de livros com busca textual (`Q` objects), filtros de status e ações             |
+| [`/livros/novo/`](http://127.0.0.1:8000/livros/novo/)                       |    GET / POST    | Formulário de criação de novo livro (organização injetada via servidor)                   |
+| `/livros/<id>/editar/`                                                      |    GET / POST    | Edição de livro com blindagem contra IDOR (retorna 404 para outros tenants)               |
+| `/livros/<id>/excluir/`                                                     |    GET / POST    | Confirmação e exclusão definitiva com blindagem contra IDOR                               |
+| [`/emprestimos/`](http://127.0.0.1:8000/emprestimos/)                       |       GET        | Listagem de empréstimos da organização otimizada com `select_related('livro', 'leitor')`  |
+| [`/emprestimos/novo/`](http://127.0.0.1:8000/emprestimos/novo/)             |    GET / POST    | Registro de empréstimo com selects filtrados por organização                              |
+| [`/api/livros/`](http://127.0.0.1:8000/api/livros/)                         |    GET / POST    | API REST (DRF) de listagem e criação de livros com validação de ano futuro                |
+| `/api/livros/<id>/`                                                         | GET/PUT/PATCH/DEL| API REST de detalhe, atualização e exclusão de livro isolado por organização              |
+| [`/api/leitores/`](http://127.0.0.1:8000/api/leitores/)                     |    GET / POST    | API REST de leitores da organização                                                       |
+| [`/api/emprestimos/`](http://127.0.0.1:8000/api/emprestimos/)               |    GET / POST    | API REST de empréstimos da organização (com `select_related` e validação cross-tenant)    |
+| [`/api/dashboard/`](http://127.0.0.1:8000/api/dashboard/)                   |       GET        | API REST do Dashboard retornando KPIs, ranking, série mensal e distribuição em JSON       |
+| [`/admin/`](http://127.0.0.1:8000/admin/)                                   |    GET / POST    | Painel administrativo nativo do Django                                                    |
 
 ---
 
