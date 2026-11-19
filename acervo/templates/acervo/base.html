@@ -21,21 +21,25 @@
           <span class="brand-text">Biblio<strong>Tech</strong></span>
         </a>
         <nav class="nav-links">
-          {% if request.user.is_authenticated and request.user.perfil %}
-          <span class="tenant-badge" title="Organização Ativa" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">
-            🏢 {{ request.user.perfil.organizacao.nome }}
-          </span>
+          {% if request.user.is_authenticated %}
+            {% if request.user.perfil %}
+            <span class="tenant-badge" title="Organização e Papel Ativos" style="display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.75rem; background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; border-radius: 999px; font-size: 0.78rem; font-weight: 600;">
+              🏢 {{ request.user.perfil.organizacao.nome }} &middot; {{ request.user.username }} ({{ request.user.perfil.get_papel_display }})
+            </span>
+            {% endif %}
+            <a href="{% url 'home' %}" class="nav-item">Início</a>
+            <a href="{% url 'lista' %}" class="nav-item">Acervo</a>
+            <a href="{% url 'novo_livro' %}" class="nav-item nav-btn">+ Livro</a>
+            {% if request.user.is_staff %}
+            <a href="/admin/" target="_blank" class="nav-item nav-outline" title="Painel administrativo">Admin ↗</a>
+            {% endif %}
+            <form method="post" action="{% url 'logout' %}" style="display: inline; margin: 0;">
+              {% csrf_token %}
+              <button type="submit" class="nav-item nav-outline" style="cursor: pointer; background: transparent; font-family: inherit;">Sair</button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="nav-item nav-btn">Entrar</a>
           {% endif %}
-          <a href="{% url 'home' %}" class="nav-item">Início</a>
-          <a href="{% url 'lista' %}" class="nav-item">Acervo de Livros</a>
-          <a href="{% url 'novo_livro' %}" class="nav-item nav-btn">+ Cadastrar Livro</a>
-          <a
-            href="/admin/"
-            target="_blank"
-            class="nav-item nav-outline"
-            title="Acessar painel administrativo"
-            >Admin ↗</a
-          >
         </nav>
       </div>
     </header>

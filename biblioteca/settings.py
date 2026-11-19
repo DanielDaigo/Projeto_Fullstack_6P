@@ -139,9 +139,9 @@ MAILERS = {
 }
 
 # Autenticação e redirecionamento (Aula 14 / Aula 15)
-LOGIN_URL = 'admin:login'
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'admin:login'
+LOGOUT_REDIRECT_URL = 'login'
 
 # Django REST Framework (Aula 13)
 REST_FRAMEWORK = {

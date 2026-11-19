@@ -90,4 +90,4 @@ class IsolamentoOrganizacaoTest(TestCase):
         client_anonimo = Client()
         response = client_anonimo.get(reverse('lista'))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/admin/login/', response.url)
+        self.assertIn('/login/', response.url)
