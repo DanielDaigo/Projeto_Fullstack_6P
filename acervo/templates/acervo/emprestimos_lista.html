@@ -1,0 +1,54 @@
+{% extends 'acervo/base.html' %}
+
+{% block title %}Empréstimos &bull; {{ organizacao.nome }}{% endblock %}
+
+{% block conteudo %}
+<div class="card table-card">
+    <div class="card-header">
+        <div>
+            <h1>Empréstimos</h1>
+            <p class="card-subtitle">Histórico de empréstimos da <strong>{{ organizacao.nome }}</strong> (consulta otimizada com <code>select_related</code>)</p>
+        </div>
+        <div class="card-actions">
+            <a href="{% url 'novo_emprestimo' %}" class="btn btn-primary">
+                <span>+ Novo Empréstimo</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Livro</th>
+                    <th>Leitor</th>
+                    <th>Data de Saída</th>
+                    <th>Devolvido em</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in emprestimos %}
+                <tr>
+                    <td><strong>{{ e.livro.titulo }}</strong></td>
+                    <td>{{ e.leitor.nome }}</td>
+                    <td>{{ e.data_saida|date:"d/m/Y" }}</td>
+                    <td>{% if e.devolvido_em %}{{ e.devolvido_em|date:"d/m/Y" }}{% else %}&mdash;{% endif %}</td>
+                    <td>
+                        {% if e.devolvido_em %}
+                        <span class="status-badge status-available">Devolvido</span>
+                        {% else %}
+                        <span class="status-badge status-unavailable">Em aberto</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nenhum empréstimo registrado nesta organização.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

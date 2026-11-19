@@ -1,0 +1,117 @@
+{% extends 'acervo/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard &bull; {{ organizacao.nome }}{% endblock %}
+
+{% block conteudo %}
+<div class="card" style="padding: 1.75rem; margin-bottom: 1.5rem;">
+    <div class="card-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1 style="margin-bottom: 0.25rem;">Dashboard &mdash; {{ organizacao.nome }}</h1>
+            <p class="card-subtitle">Métricas gerenciais calculadas em tempo real pelo ORM</p>
+        </div>
+        {% if mostra_series %}
+        <div>
+            <a href="{% url 'exportar_csv' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-primary">
+                <span>⬇️ Exportar CSV</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Filtro de Período Validado (PeriodoForm) -->
+    <form method="get" action="{% url 'dashboard' %}" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1rem;">
+        <div>
+            <label for="id_inicio" class="form-label" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Início</label>
+            {{ form.inicio }}
+        </div>
+        <div>
+            <label for="id_fim" class="form-label" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">Fim</label>
+            {{ form.fim }}
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<!-- 1. Cartões KPI (aggregate + Count com filter) -->
+<div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card">
+        <div class="stat-icon icon-blue">📊</div>
+        <div class="stat-info">
+            <span class="stat-label">Empréstimos no Período</span>
+            <span class="stat-value">{{ kpis.total }}</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-amber">⏳</div>
+        <div class="stat-info">
+            <span class="stat-label">Em Aberto</span>
+            <span class="stat-value">{{ kpis.abertos }}</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-green">👥</div>
+        <div class="stat-info">
+            <span class="stat-label">Leitores Ativos</span>
+            <span class="stat-value">{{ kpis.leitores }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Gráficos e Ranking -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+    {% if mostra_series %}
+    <div class="card" style="padding: 1.5rem;">
+        <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Empréstimos por Mês</h2>
+        {% if por_mes %}
+            {{ por_mes|json_script:"dados-mes" }}
+            <canvas id="graf-mes" height="200"></canvas>
+        {% else %}
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Sem dados no período selecionado.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="card" style="padding: 1.5rem;">
+        <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Livros Mais Emprestados (Top 5)</h2>
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--border);">Título</th>
+                    <th style="text-align: right; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--border);">Empréstimos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in ranking %}
+                <tr>
+                    <td style="padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border);">{{ item.livro__titulo }}</td>
+                    <td style="padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--border); text-align: right; font-weight: 700; color: var(--brand-indigo);">{{ item.total }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="padding: 1.5rem 0.5rem; text-align: center; color: var(--text-muted);">Sem dados no período.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="padding: 1.5rem;">
+        <h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Distribuição de Status</h2>
+        {% if kpis.total > 0 %}
+            {{ distribuicao|json_script:"dados-distribuicao" }}
+            <div style="max-width: 260px; margin: 0 auto;">
+                <canvas id="graf-distribuicao"></canvas>
+            </div>
+        {% else %}
+            <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Sem empréstimos registrados no período.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'acervo/js/dashboard.js' %}"></script>
+{% endblock %}
