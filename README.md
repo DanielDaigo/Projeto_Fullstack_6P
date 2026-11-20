@@ -4,17 +4,17 @@
 [![Django](https://img.shields.io/badge/Django-6.1.1-092E20?logo=django)](https://www.djangoproject.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
-[![Status](https://img.shields.io/badge/Status-Mini--SaaS%20P2%20%7C%20Aulas%2013--17%20Conclu%C3%ADdas-brightgreen)]()
+[![Status](https://img.shields.io/badge/Status-Trabalho%20Final%20P2%20%7C%20Mini--SaaS%20Completo-brightgreen)]()
 
-Aplicação web desenvolvida com **Django**, **Django REST Framework (DRF)** e **PostgreSQL** para gerenciamento de um acervo de livros e empréstimos em formato **Mini-SaaS Multi-tenant**, atendendo a todos os 4 pilares da **P2** da disciplina de Laboratório de Programação Full Stack (Universidade de Vassouras - Prof. Márcio Garrido).
+Aplicação web desenvolvida com **Django**, **Django REST Framework (DRF)** e **PostgreSQL** para gerenciamento de um acervo de livros e empréstimos em formato **Mini-SaaS Multi-tenant**, consolidando a entrega do **Trabalho Final P2** da disciplina de Laboratório de Programação Full Stack (Universidade de Vassouras - Prof. Márcio Garrido).
 
-O projeto reúne:
-1. **Multi-organização (Aula 14):** isolamento de dados por coluna discriminadora (`DaOrganizacao`), migração segura em 3 etapas e proteção contra IDOR.
+O projeto reúne integralmente os **4 pilares da P2**:
+1. **Multi-organização (Aula 14):** isolamento de dados por coluna discriminadora (`DaOrganizacao`), migração segura em 3 etapas, `UniqueConstraint` por organização (`livro_unico_por_org`) e proteção contra IDOR.
 2. **Perfis de Acesso e Papéis (Aulas 13/15/17):** `Perfil` com papéis `Administrador` e `Operador`, `@papel_requerido('admin')` e fluxo dedicado de Login/Logout.
-3. **API REST com DRF (Aulas 13/16/17):** endpoints autenticados e isolados por organização em `/api/livros/`, `/api/leitores/`, `/api/emprestimos/` e `/api/dashboard/`.
+3. **API REST com DRF (Aulas 13/16/17):** endpoints autenticados e isolados por organização em `/api/livros/`, `/api/leitores/`, `/api/emprestimos/` e `/api/dashboard/`, reutilizando a validação centralizada no Model (`validar_ano_nao_futuro`).
 4. **Dashboard Gerencial e Relatórios (Aula 17):** 4 métricas ORM (`aggregate`, `annotate`, `TruncMonth`, `Count` com `filter=Q(...)`), filtro por período validado (`PeriodoForm`), gráficos em Chart.js via `json_script`, otimização contra N+1 (`select_related` + índice em `data_saida` + `assertNumQueries`) e exportação CSV sanitizada contra formula injection.
 
-> **Status atual:** Todos os 4 pilares da P2 (Aulas 13 a 17) implementados e validados por **16 testes automatizados** (`python manage.py test`).
+> **Status atual:** **Trabalho Final P2 concluído**, contemplando todos os requisitos das Aulas 13, 14 e 17 e validado por **19 testes automatizados** (`python manage.py test`).
 
 ---
 
@@ -252,6 +252,19 @@ python manage.py test acervo
 - **Usuário 1:** `operador_central` (Senha: `senha123`) &bull; Organização: **Biblioteca Central**
 - **Usuário 2:** `operador_universitaria` (Senha: `senha123`) &bull; Organização: **Biblioteca Universitária**
 - **Superusuário:** `Daniel` &bull; Organização: **Organização padrão**
+
+---
+
+## 📊 Dashboard Gerencial — 4 Perguntas de Negócio (Aula 17)
+
+Conforme a **Tarefa 1 (Aula 17, Slide 5)**, cada bloco do dashboard responde diretamente a uma pergunta estratégica do gestor da biblioteca:
+
+| # | Pergunta de Negócio | Tipo de Métrica | Implementação ORM (`acervo/dashboard.py`) | Visualização |
+| :-: | :--- | :--- | :--- | :--- |
+| 1 | *Quantos empréstimos, em aberto e leitores ativos temos no período?* | **Total (KPI)** | `aggregate(total=Count('id'), leitores=Count('leitor', distinct=True), abertos=Count('id', filter=Q(devolvido_em__isnull=True)))` | Cartões KPI |
+| 2 | *Quais são os 5 livros mais emprestados?* | **Ranking** | `values('livro__titulo').annotate(total=Count('id')).order_by('-total')[:5]` | Tabela Top 5 com `{% empty %}` |
+| 3 | *Como evoluiu o volume de empréstimos mês a mês?* | **Série Temporal** | `annotate(mes=TruncMonth('data_saida')).values('mes').annotate(total=Count('id')).order_by('mes')` | Gráfico de barras Chart.js (`json_script`) — *Admin* |
+| 4 | *Qual a proporção entre empréstimos em aberto e devolvidos?* | **Distribuição** | Contagem condicional (`abertos` vs `devolvidos`) sobre a mesma base filtrada | Gráfico de rosca Chart.js (`json_script`) |
 
 ---
 

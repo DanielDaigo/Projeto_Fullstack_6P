@@ -1,31 +1,39 @@
-# Melhorias P1 & Débito Técnico &bull; Road to Mini-SaaS (P2)
+# Revisão da P1 e Evolução para o Trabalho Final (P2)
 
-Este documento registra a revisão técnica da entrega da **P1** do projeto **Biblioteca / Acervo** (Laboratório de Programação Full Stack - Prof. Márcio Garrido), acompanhando a resolução incremental de cada débito técnico até a **P2** (Aulas 13 a 17).
-
----
-
-## 📌 Diagnóstico da P1 e Ações Corretivas
-
-### 1. Ausência de Isolamento de Dados entre Clientes (Multi-tenancy) — ✅ Resolvido (Aula 14)
-* **Diagnóstico na P1:** Todos os livros cadastrados pertenciam a uma base global única.
-* **Solução Implementada:** Criação do app `core` com `Organizacao`, classe abstrata `DaOrganizacao` e `Perfil`. Migração segura em 3 etapas (`null=True` → `RunPython` → `null=False`) sem perda de dados da P1 e filtro compulsório `filter(organizacao=org)` em todas as consultas.
-
-### 2. Vulnerabilidade a IDOR (Insecure Direct Object Reference) — ✅ Resolvido (Aula 14)
-* **Diagnóstico na P1:** Edição e exclusão recuperavam instâncias apenas por `pk`.
-* **Solução Implementada:** Blindagem via `get_object_or_404(Livro, pk=pk, organizacao=org_atual(request))`, retornando HTTP 404 para registros de outras organizações, e filtragem de querysets nos `ModelForm` (`EmprestimoForm`).
-
-### 3. Autenticação Genérica e Falta de Controle de Acesso por Papel (RBAC) — ✅ Resolvido (Aulas 13/15/17)
-* **Diagnóstico na P1:** Dependência do login nativo do Django Admin e ausência de distinção de papéis.
-* **Solução Implementada:** Adição do campo `papel` (`admin` / `operador`) e propriedade `eh_admin` em `Perfil`, decorator `@papel_requerido('admin')` em `core/decorators.py`, tela própria de login/logout e restrição de séries temporais e exportação CSV apenas para administradores.
-
-### 4. Interface Estritamente Server-Side sem API REST — ✅ Resolvido (Aula 13 + Aula 17)
-* **Diagnóstico na P1:** A aplicação operava apenas com renderização HTML via templates DTL.
-* **Solução Implementada:** Instalação do Django REST Framework (DRF), `LivroSerializer` (replicando a validação de ano futuro), `LeitorSerializer`, `EmprestimoSerializer`, endpoints CRUD isolados por tenant em `/api/` e `DashboardApi` (`/api/dashboard/`) reaproveitando `acervo/dashboard.py`.
-
-### 5. Métricas Analíticas Básicas e Risco de Consultas N+1 — ✅ Resolvido (Aula 17)
-* **Diagnóstico na P1:** A tela inicial fazia apenas contagens simples e não havia métricas analíticas nem proteção contra consultas N+1.
-* **Solução Implementada:** Dashboard completo em `/dashboard/` com 4 métricas ORM (`aggregate`, `Count` com `filter=Q(...)`, `values` + `annotate`, `TruncMonth`), filtro por período validado (`PeriodoForm`), gráficos em Chart.js via `json_script`, índice em `Emprestimo.data_saida`, uso de `select_related('livro', 'leitor')`, exportação CSV sanitizada contra formula injection e testes automatizados com `assertNumQueries`.
+Documento elaborado conforme diretriz da **Aula 13 (Slide 5)** da disciplina de **Laboratório de Programação Full Stack** (Universidade de Vassouras — Prof. Márcio Garrido), registrando os 5 pontos de fragilidade identificados na entrega da **P1** e como cada um foi corrigido na consolidação do **Trabalho Final P2 (Mini-SaaS)**.
 
 ---
 
-> Todos os 5 débitos técnicos levantados após a P1 foram integralmente solucionados e validados por 16 testes automatizados.
+## 📋 Itens de Melhoria Identificados na P1
+
+### 1. Centralização da Regra de Negócio no Model (Dívida Técnica)
+* **O que estava frágil na P1:** A validação de ano de publicação futuro (`clean_ano()`) existia apenas no `LivroForm`. Qualquer cadastro feito pelo Django Admin ou pela futura API REST conseguiria burlar a regra ou exigiria duplicação de código.
+* **Correção aplicada na P2:** A função `validar_ano_nao_futuro` foi movida para `acervo/models.py` (como validator do campo `ano` e no método `Livro.clean()`), sendo reaproveitada tanto pelo `LivroForm` quanto pelo `LivroSerializer` do DRF.
+
+### 2. Modelagem Incompleta de Relacionamentos (Modelagem)
+* **O que estava frágil na P1:** O sistema possuía apenas o model `Livro` com um campo booleano `disponivel`, sem registrar quem pegou o livro nem quando ocorreu o empréstimo ou devolução.
+* **Correção aplicada na P2:** Foram adicionados os models `Leitor` e `Emprestimo` (com `ForeignKey` para `Livro` e `Leitor`, `data_saida` indexada via `models.Index` e `devolvido_em`), viabilizando histórico real, séries temporais (`TruncMonth`) e rankings no dashboard.
+
+### 3. Ausência de Isolamento Multi-organização e Unicidade por Tenant (Segurança)
+* **O que estava frágil na P1:** Todos os livros ficavam em uma base única e as views de edição/exclusão buscavam apenas por `pk` (`get_object_or_404(Livro, pk=pk)`), permitindo acesso indevido entre clientes (IDOR).
+* **Correção aplicada na P2:** Criado o app `core` com `Organizacao`, classe abstrata `DaOrganizacao` e `Perfil`. Aplicada migração segura em 3 etapas sem perda dos registros da P1, `UniqueConstraint(fields=['organizacao', 'titulo', 'autor'])`, filtragem obrigatória por `org_atual(request)` em todas as views/API e proteção contra IDOR retornando HTTP 404.
+
+### 4. Controle de Acesso Genérico sem Papéis Definidos (Autenticação e Permissões)
+* **O que estava frágil na P1:** Não havia distinção entre perfis operacionais e administrativos nem fluxo próprio de login/logout fora do Django Admin.
+* **Correção aplicada na P2:** Adicionado o campo `papel` (`admin` / `operador`) e a propriedade `eh_admin` em `Perfil`, criado o decorator `@papel_requerido('admin')`, implementadas telas dedicadas de `/login/` e `/logout/` e aplicadas permissões diferenciadas no dashboard e na exportação CSV.
+
+### 5. Ausência de Testes Automatizados e Otimização de Consultas (Qualidade e Desempenho)
+* **O que estava frágil na P1:** A validação do sistema era apenas manual e não havia proteção automatizada contra regressões ou consultas N+1.
+* **Correção aplicada na P2:** Aplicado `select_related('livro', 'leitor')` nas consultas de empréstimos e construída suíte com **19 testes automatizados** (`python manage.py test`) cobrindo isolamento multi-tenant, unicidade por organização, validação centralizada no Model, métricas do dashboard, bloqueio por papel, exportação CSV sanitizada, API REST e `assertNumQueries(1)`.
+
+---
+
+## ✅ Resumo de Entrega — Trabalho Final P2
+
+| # | Item de Revisão da P1 | Status no Trabalho Final P2 |
+| :-: | :--- | :---: |
+| 1 | Validação centralizada no Model (`validar_ano_nao_futuro`) | ✅ Concluído |
+| 2 | Novos models relacionais (`Leitor`, `Emprestimo` + índice em `data_saida`) | ✅ Concluído |
+| 3 | Multi-organização, migração em 3 etapas, `UniqueConstraint` e blindagem IDOR | ✅ Concluído |
+| 4 | Perfis de acesso (`admin`/`operador`), `@papel_requerido` e Login/Logout | ✅ Concluído |
+| 5 | Otimização contra N+1 (`select_related`) e 19 testes automatizados (`assertNumQueries`) | ✅ Concluído |
