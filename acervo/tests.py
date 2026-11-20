@@ -83,6 +83,55 @@ class IsolamentoOrganizacaoTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('/login/', response.url)
 
+    def test_unicidade_por_organizacao_permite_outro_tenant_e_bloqueia_duplicado_no_mesmo(self):
+        """Aula 14, Slides 16 e 18: Org A pode cadastrar o mesmo livro da Org B, mas não duplicar o próprio."""
+        url_novo = reverse('novo_livro')
+        # 1. Org A cadastra mesmo título e autor já existente na Org B -> Permitido!
+        resp_ok = self.client_a.post(url_novo, {
+            'titulo': self.livro_b.titulo,
+            'autor': self.livro_b.autor,
+            'ano': 2021,
+            'disponivel': True,
+        })
+        self.assertEqual(resp_ok.status_code, 302)
+        self.assertEqual(
+            Livro.objects.filter(organizacao=self.org_a, titulo=self.livro_b.titulo).count(), 1
+        )
+
+        # 2. Org A tenta cadastrar novamente o mesmo livro -> Erro de validação no form (sem IntegrityError)
+        resp_dup = self.client_a.post(url_novo, {
+            'titulo': self.livro_b.titulo,
+            'autor': self.livro_b.autor,
+            'ano': 2021,
+            'disponivel': True,
+        })
+        self.assertEqual(resp_dup.status_code, 200)
+        self.assertFalse(resp_dup.context['form'].is_valid())
+
+    def test_selects_do_emprestimo_form_isolados_por_organizacao(self):
+        """Aula 14, Slides 15 e 18: Selects do formulário mostram apenas opções da organização A."""
+        from acervo.forms import EmprestimoForm
+        leitor_a = Leitor.objects.create(nome="Leitor A", organizacao=self.org_a)
+        leitor_b = Leitor.objects.create(nome="Leitor B", organizacao=self.org_b)
+
+        form = EmprestimoForm(org=self.org_a)
+        self.assertIn(self.livro_a, form.fields['livro'].queryset)
+        self.assertNotIn(self.livro_b, form.fields['livro'].queryset)
+        self.assertIn(leitor_a, form.fields['leitor'].queryset)
+        self.assertNotIn(leitor_b, form.fields['leitor'].queryset)
+
+    def test_validacao_ano_futuro_centralizada_no_model(self):
+        """Aula 13, Slide 16: Regra de negócio centralizada no Model vale também fora dos forms."""
+        from django.core.exceptions import ValidationError
+        livro_futuro = Livro(
+            titulo="Livro do Futuro",
+            autor="Autor",
+            ano=datetime.date.today().year + 2,
+            organizacao=self.org_a,
+        )
+        with self.assertRaises(ValidationError):
+            livro_futuro.full_clean()
+
 
 class DashboardTest(TestCase):
     """

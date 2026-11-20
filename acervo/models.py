@@ -1,13 +1,37 @@
+import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from core.models import DaOrganizacao
 
 
+def validar_ano_nao_futuro(valor):
+    """
+    Regra de negócio centralizada (P1 / Aula 13, Slide 16):
+    Mantida em um único lugar para valer no Model, Django Admin, ModelForm e DRF Serializer.
+    """
+    ano_atual = datetime.date.today().year
+    if valor is not None and valor > ano_atual:
+        raise ValidationError("O ano de publicação não pode ser superior ao ano atual.")
+
+
 class Livro(DaOrganizacao):
     titulo = models.CharField(max_length=200)
     autor = models.CharField(max_length=100)
-    ano = models.IntegerField()
+    ano = models.IntegerField(validators=[validar_ano_nao_futuro])
     disponivel = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organizacao', 'titulo', 'autor'],
+                name='livro_unico_por_org',
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        validar_ano_nao_futuro(self.ano)
 
     def __str__(self):
         return self.titulo

@@ -1,6 +1,6 @@
-import datetime
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
-from .models import Livro, Leitor, Emprestimo
+from .models import Livro, Leitor, Emprestimo, validar_ano_nao_futuro
 
 
 class LivroSerializer(serializers.ModelSerializer):
@@ -10,15 +10,30 @@ class LivroSerializer(serializers.ModelSerializer):
 
     def validate_ano(self, value):
         """
-        Regra de negócio da P1 aplicada também na API REST (Aula 13, Slide 16):
-        O ano de publicação não pode ser superior ao ano atual.
+        Reaproveita a validação centralizada no Model (Aula 13, Slide 16),
+        evitando duplicação de regra de negócio entre Form e Serializer.
         """
-        ano_atual = datetime.date.today().year
-        if value > ano_atual:
-            raise serializers.ValidationError(
-                "O ano de publicação não pode ser superior ao ano atual."
-            )
+        try:
+            validar_ano_nao_futuro(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.messages[0])
         return value
+
+    def validate(self, data):
+        request = self.context.get('request')
+        if request and hasattr(request.user, 'perfil'):
+            org = request.user.perfil.organizacao
+            titulo = data.get('titulo', getattr(self.instance, 'titulo', None))
+            autor = data.get('autor', getattr(self.instance, 'autor', None))
+            if titulo and autor:
+                qs = Livro.objects.filter(organizacao=org, titulo=titulo, autor=autor)
+                if self.instance:
+                    qs = qs.exclude(pk=self.instance.pk)
+                if qs.exists():
+                    raise serializers.ValidationError(
+                        "Já existe um livro cadastrado com este título e autor nesta organização."
+                    )
+        return data
 
 
 class LeitorSerializer(serializers.ModelSerializer):

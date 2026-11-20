@@ -1,6 +1,5 @@
-import datetime
 from django import forms
-from .models import Livro, Leitor, Emprestimo
+from .models import Livro, Leitor, Emprestimo, validar_ano_nao_futuro
 
 
 class LivroForm(forms.ModelForm):
@@ -33,16 +32,32 @@ class LivroForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, org=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.org = org
+
     def clean_ano(self):
-        """
-        Regra de negócio obrigatória (P1):
-        O ano de publicação do livro não pode ser um ano futuro.
-        """
         ano = self.cleaned_data.get('ano')
-        ano_atual = datetime.date.today().year
-        if ano is not None and ano > ano_atual:
-            raise forms.ValidationError("O ano de publicação não pode ser superior ao ano atual.")
+        validar_ano_nao_futuro(ano)
         return ano
+
+    def clean(self):
+        """
+        Valida a unicidade de (titulo, autor) dentro da organização ativa (Aula 14, Slide 16),
+        evitando IntegrityError ao salvar.
+        """
+        cleaned_data = super().clean()
+        titulo = cleaned_data.get('titulo')
+        autor = cleaned_data.get('autor')
+        if self.org and titulo and autor:
+            qs = Livro.objects.filter(organizacao=self.org, titulo=titulo, autor=autor)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError(
+                    "Já existe um livro cadastrado com este título e autor nesta organização."
+                )
+        return cleaned_data
 
 
 class LeitorForm(forms.ModelForm):

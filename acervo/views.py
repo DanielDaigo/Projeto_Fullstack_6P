@@ -194,7 +194,7 @@ def novo_livro(request):
     """
     org = org_atual(request)
     if request.method == 'POST':
-        form = LivroForm(request.POST)
+        form = LivroForm(request.POST, org=org)
         if form.is_valid():
             livro = form.save(commit=False)
             livro.organizacao = org
@@ -203,7 +203,7 @@ def novo_livro(request):
             messages.success(request, f'Livro "{livro.titulo}" cadastrado com sucesso!')
             return redirect('lista')
     else:
-        form = LivroForm()
+        form = LivroForm(org=org)
 
     return render(request, 'acervo/form.html', {
         'form': form,
@@ -223,13 +223,13 @@ def editar_livro(request, pk):
     org = org_atual(request)
     livro = get_object_or_404(Livro, pk=pk, organizacao=org)
     if request.method == 'POST':
-        form = LivroForm(request.POST, instance=livro)
+        form = LivroForm(request.POST, instance=livro, org=org)
         if form.is_valid():
             form.save()
             messages.success(request, f'Livro "{livro.titulo}" atualizado com sucesso!')
             return redirect('lista')
     else:
-        form = LivroForm(instance=livro)
+        form = LivroForm(instance=livro, org=org)
 
     return render(request, 'acervo/form.html', {
         'form': form,
